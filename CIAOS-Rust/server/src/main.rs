@@ -5,8 +5,8 @@ use bytes::BytesMut;
 use log::{info, error, warn};
 use actix_web::error::ErrorInternalServerError;
 
-// storage.rs contains functionality related to writing files to storage and getting offset and size
-//as well as dealing with file retrieval from storage and deletion
+/*storage.rs contains functionality related to writing files to storage and getting offset and size
+as well as dealing with file retrieval from storage and deletion */ 
 mod storage;
 use crate::storage::{write_files_to_storage, get_files_from_storage, delete_and_log};
 
@@ -49,24 +49,19 @@ async fn upload_files(
     info!("Total received data size: {} bytes", bytes.len());
     
     //sends the bytes to storage.rs so that the flatbuffer can deserialise it and write to bin and than return offset and size vec list
-    let (offset_list, size_list) = storage::write_files_to_storage(&bytes)?;
+    let offset_size_list = storage::write_files_to_storage(&bytes)?;
 
 
-    if offset_list.is_empty() || size_list.is_empty() {
+    if offset_size_list.is_empty()  {
         error!("No data in data list with key: {}", key);
         return Ok(HttpResponse::BadRequest().body("No data in data list"));
     }
     
-    info!(
-        "Data written to file. Offset list size: {}, Size list size: {}",
-        offset_list.len(),
-        size_list.len()
-    );
     info!("Serializing offset and size and uploading");
 
-    let (offset_bytes, size_bytes) = serialize_offset_size(&offset_list, &size_list)?;
+    let offset_size_bytes = serialize_offset_size(offset_size_list)?;
     
-    upload_sql(&key, &offset_bytes, &size_bytes)
+    upload_sql(&key, &offset_size_bytes)
         .map_err(actix_web::error::ErrorInternalServerError)?;
 
     info!("Data uploaded successfully with key: {}", key);

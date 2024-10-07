@@ -11,8 +11,7 @@ lazy_static! {
             "CREATE TABLE IF NOT EXISTS haystack (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 key TEXT NOT NULL,
-                offset_list BLOB,
-                size_list BLOB
+                offset_size_list BLOB
             )",
             [],
         )
@@ -28,11 +27,11 @@ pub fn check_key(key: &str) -> SqliteResult<bool> {
     Ok(count > 0)
 }
 
-pub fn upload_sql(key: &str, offset_bytes: &[u8], size_bytes: &[u8]) -> SqliteResult<()> {
+pub fn upload_sql(key: &str, offset_size_bytes: &[u8]) -> SqliteResult<()> {
     let conn = DB_CONN.lock().unwrap();
     conn.execute(
-        "INSERT INTO haystack (key, offset_list, size_list) VALUES (?1, ?2, ?3)",
-        params![key, offset_bytes, size_bytes],
+        "INSERT INTO haystack (key, offset_size_list) VALUES (?1, ?2)",
+        params![key, offset_size_bytes],
     )?;
     Ok(())
 }
